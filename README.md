@@ -35,3 +35,13 @@ Expected response:
 ```json
 {"status":"ok"}
 ```
+
+## Seed Data
+
+After the services are running, populate the database with test users and equipment:
+
+```bash
+docker compose exec backend python seed.py
+```
+
+The seed script is idempotent, so it can be run more than once without creating duplicate users or equipment.

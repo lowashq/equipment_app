@@ -1,8 +1,16 @@
-FROM alpine:3.20
+FROM nginx:1.27-alpine
 
-RUN mkdir -p /www \
-    && printf '%s\n' '{"status":"decision-engine-placeholder"}' > /www/index.html
+RUN printf '%s\n' \
+    'server {' \
+    '    listen 3001;' \
+    '    server_name localhost;' \
+    '    location / {' \
+    '        default_type application/json;' \
+    '        return 200 "{\"status\":\"decision-engine-placeholder\"}";' \
+    '    }' \
+    '}' \
+    > /etc/nginx/conf.d/default.conf
 
 EXPOSE 3001
 
-CMD ["busybox", "httpd", "-f", "-p", "3001", "-h", "/www"]
+CMD ["nginx", "-g", "daemon off;"]
