@@ -14,25 +14,25 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 USERS = [
     {
-        "email": "student@university.edu",
+        "email": "student@student.san.edu.pl",
         "full_name": "Student User",
         "password": "student123",
         "role": "student",
     },
     {
-        "email": "staff@university.edu",
+        "email": "staff@san.edu.pl",
         "full_name": "Staff User",
         "password": "staff123",
         "role": "staff",
     },
     {
-        "email": "manager@university.edu",
+        "email": "manager@san.edu.pl",
         "full_name": "Equipment Manager",
         "password": "manager123",
         "role": "equipment_manager",
     },
     {
-        "email": "admin@university.edu",
+        "email": "admin@san.edu.pl",
         "full_name": "Admin User",
         "password": "admin123",
         "role": "admin",

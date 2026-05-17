@@ -1,3 +1,10 @@
+from app.schemas.auth import (
+    AuthUserResponse,
+    KeycloakLoginResponse,
+    LoginRequest,
+    RegisterRequest,
+    TokenResponse,
+)
 from app.schemas.equipment import EquipmentCreate, EquipmentResponse, EquipmentUpdate
 from app.schemas.fault_report import FaultReportCreate, FaultReportResponse
 from app.schemas.reservation import ReservationCreate, ReservationResponse
@@ -14,6 +21,11 @@ __all__ = [
     "ReservationResponse",
     "ReturnCreate",
     "ReturnResponse",
+    "AuthUserResponse",
+    "KeycloakLoginResponse",
+    "LoginRequest",
+    "RegisterRequest",
+    "TokenResponse",
     "UserCreate",
     "UserResponse",
 ]

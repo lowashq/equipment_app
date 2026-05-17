@@ -34,9 +34,11 @@
       "publicClient": true,
       "protocol": "openid-connect",
       "redirectUris": [
+        "http://localhost:8000/auth/keycloak/callback",
         "http://localhost:3000/*"
       ],
       "webOrigins": [
+        "http://localhost:8000",
         "http://localhost:3000"
       ],
       "standardFlowEnabled": true,
@@ -49,7 +51,7 @@
   "users": [
     {
       "username": "student@university.edu",
-      "email": "student@university.edu",
+      "email": "student@student.san.edu.pl",
       "enabled": true,
       "emailVerified": true,
       "firstName": "Student",
@@ -67,7 +69,7 @@
     },
     {
       "username": "staff@university.edu",
-      "email": "staff@university.edu",
+      "email": "staff@san.edu.pl",
       "enabled": true,
       "emailVerified": true,
       "firstName": "Staff",
@@ -85,7 +87,7 @@
     },
     {
       "username": "manager@university.edu",
-      "email": "manager@university.edu",
+      "email": "manager@san.edu.pl",
       "enabled": true,
       "emailVerified": true,
       "firstName": "Equipment",
@@ -103,7 +105,7 @@
     },
     {
       "username": "admin@university.edu",
-      "email": "admin@university.edu",
+      "email": "admin@san.edu.pl",
       "enabled": true,
       "emailVerified": true,
       "firstName": "Admin",

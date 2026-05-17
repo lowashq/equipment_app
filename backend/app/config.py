@@ -9,9 +9,11 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
 
     keycloak_url: str
+    keycloak_public_url: str = "http://localhost:8080"
     keycloak_realm: str
     keycloak_client_id: str
     keycloak_client_secret: str = ""
+    keycloak_redirect_uri: str = "http://localhost:8000/auth/keycloak/callback"
 
     decision_engine_url: str
 

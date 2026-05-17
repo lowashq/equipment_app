@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.routers import auth
 
 
 logger = logging.getLogger(__name__)
@@ -43,6 +44,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 app = FastAPI(title="University Equipment Rental System", lifespan=lifespan)
+app.include_router(auth.router, prefix="/auth", tags=["auth"])
 
 app.add_middleware(
     CORSMiddleware,

@@ -45,3 +45,15 @@ docker compose exec backend python seed.py
 ```
 
 The seed script is idempotent, so it can be run more than once without creating duplicate users or equipment.
+
+## Authentication
+
+JWT and Keycloak SSO endpoints are available under `/auth`:
+
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/me`
+- `GET /auth/keycloak/login`
+- `GET /auth/keycloak/callback?code=...`
+
+Registration is limited to `@student.san.edu.pl` and `@san.edu.pl` email addresses.
