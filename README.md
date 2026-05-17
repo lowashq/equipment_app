@@ -57,3 +57,15 @@ JWT and Keycloak SSO endpoints are available under `/auth`:
 - `GET /auth/keycloak/callback?code=...`
 
 Registration is limited to `@student.san.edu.pl` and `@san.edu.pl` email addresses.
+
+## Equipment Status Transitions
+
+Allowed status changes:
+
+- `available` -> `reserved`, `serviced`
+- `reserved` -> `borrowed`, `available`, `serviced`
+- `borrowed` -> `available`, `damaged`, `serviced`
+- `serviced` -> `available`
+- `damaged` -> `serviced`
+
+Managers and admins can update status with `PATCH /equipment/{id}/status`.

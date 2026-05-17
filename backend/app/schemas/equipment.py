@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal
 from uuid import UUID
 
@@ -43,3 +43,28 @@ class EquipmentResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class EquipmentStatusUpdate(BaseModel):
+    status: EquipmentStatus
+
+
+class EquipmentHistoryUser(BaseModel):
+    full_name: str
+    email: str
+    role: str
+
+
+class EquipmentHistoryReturn(BaseModel):
+    returned_at: datetime
+    condition: str
+    notes: str | None
+
+
+class EquipmentHistoryReservation(BaseModel):
+    id: UUID
+    start_date: date
+    end_date: date
+    status: str
+    user: EquipmentHistoryUser
+    return_info: EquipmentHistoryReturn | None = None
