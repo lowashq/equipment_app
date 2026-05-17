@@ -14,7 +14,7 @@ from app.schemas.equipment import (
 )
 from app.schemas.fault_report import FaultReportCreate, FaultReportResponse
 from app.schemas.reservation import ReservationCreate, ReservationResponse
-from app.schemas.return_schema import ReturnCreate, ReturnResponse
+from app.schemas.return_schema import ReturnCreate, ReturnDetailResponse, ReturnResponse
 from app.schemas.user import UserCreate, UserResponse
 
 __all__ = [
@@ -28,6 +28,7 @@ __all__ = [
     "ReservationCreate",
     "ReservationResponse",
     "ReturnCreate",
+    "ReturnDetailResponse",
     "ReturnResponse",
     "AuthUserResponse",
     "KeycloakLoginResponse",

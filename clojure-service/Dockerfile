@@ -1,16 +1,9 @@
-FROM nginx:1.27-alpine
+FROM python:3.12-alpine
 
-RUN printf '%s\n' \
-    'server {' \
-    '    listen 3001;' \
-    '    server_name localhost;' \
-    '    location / {' \
-    '        default_type application/json;' \
-    '        return 200 "{\"status\":\"decision-engine-placeholder\"}";' \
-    '    }' \
-    '}' \
-    > /etc/nginx/conf.d/default.conf
+WORKDIR /app
+
+COPY server.py .
 
 EXPOSE 3001
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["python", "server.py"]
