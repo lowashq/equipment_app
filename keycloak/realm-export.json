@@ -1,0 +1,123 @@
+{
+  "realm": "university",
+  "enabled": true,
+  "displayName": "University",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "student",
+        "description": "Student users who can rent equipment"
+      },
+      {
+        "name": "staff",
+        "description": "University staff users"
+      },
+      {
+        "name": "equipment_manager",
+        "description": "Users who manage equipment inventory and rentals"
+      },
+      {
+        "name": "admin",
+        "description": "Application administrators"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "equipment-app",
+      "name": "Equipment Rental App",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ],
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true
+    }
+  ],
+  "users": [
+    {
+      "username": "student@university.edu",
+      "email": "student@university.edu",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Student",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "student123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "student"
+      ]
+    },
+    {
+      "username": "staff@university.edu",
+      "email": "staff@university.edu",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Staff",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "staff123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "staff"
+      ]
+    },
+    {
+      "username": "manager@university.edu",
+      "email": "manager@university.edu",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Equipment",
+      "lastName": "Manager",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "manager123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "equipment_manager"
+      ]
+    },
+    {
+      "username": "admin@university.edu",
+      "email": "admin@university.edu",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "admin"
+      ]
+    }
+  ]
+}
