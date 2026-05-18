@@ -1,9 +1,13 @@
-FROM python:3.12-alpine
+FROM clojure:lein-2.11.2
 
 WORKDIR /app
 
-COPY server.py .
+COPY project.clj .
+RUN lein deps
+
+COPY . .
+RUN lein uberjar
 
 EXPOSE 3001
 
-CMD ["python", "server.py"]
+CMD ["java", "-jar", "target/decision-engine-1.0.0-standalone.jar"]

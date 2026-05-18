@@ -38,16 +38,16 @@ async def check_reservation_allowed(
     )
 
     payload = {
-        "user_id": str(user.id),
-        "equipment_id": str(equipment.id),
-        "start_date": str(start_date),
-        "end_date": str(end_date),
-        "user_role": user.role,
-        "user_active_rentals": active_count or 0,
-        "user_overdue_rentals": overdue_count or 0,
-        "equipment_status": equipment.status,
-        "equipment_max_rental_days": equipment.max_rental_days,
-        "equipment_type": equipment.type,
+        "userId": str(user.id),
+        "equipmentId": str(equipment.id),
+        "startDate": str(start_date),
+        "endDate": str(end_date),
+        "userRole": user.role,
+        "userActiveRentals": active_count or 0,
+        "userOverdueRentals": overdue_count or 0,
+        "equipmentStatus": equipment.status,
+        "equipmentMaxRentalDays": equipment.max_rental_days,
+        "equipmentType": equipment.type,
     }
 
     try:
