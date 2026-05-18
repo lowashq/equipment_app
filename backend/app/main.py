@@ -6,14 +6,24 @@ from typing import AsyncGenerator
 
 from alembic import command
 from alembic.config import Config
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import auth, equipment, fault_reports, reservations, returns
+from app.routers import (
+    auth,
+    equipment,
+    fault_reports,
+    notifications,
+    reports,
+    reservations,
+    returns,
+)
+from app.scheduler import check_upcoming_returns
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("uvicorn.error")
 BASE_DIR = Path(__file__).resolve().parents[1]
 
 
@@ -40,7 +50,19 @@ async def run_migrations_with_retry() -> None:
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await run_migrations_with_retry()
     app.state.settings = settings
-    yield
+
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(check_upcoming_returns, "cron", hour=9, minute=0)
+    scheduler.start()
+    print("Daily return reminder scheduler started for 09:00", flush=True)
+    logger.warning("Daily return reminder scheduler started for 09:00")
+
+    try:
+        yield
+    finally:
+        scheduler.shutdown(wait=False)
+        print("Daily return reminder scheduler stopped", flush=True)
+        logger.warning("Daily return reminder scheduler stopped")
 
 
 app = FastAPI(title="University Equipment Rental System", lifespan=lifespan)
@@ -49,6 +71,8 @@ app.include_router(equipment.router, prefix="/equipment", tags=["equipment"])
 app.include_router(reservations.router, prefix="/reservations", tags=["reservations"])
 app.include_router(returns.router, prefix="/returns", tags=["returns"])
 app.include_router(fault_reports.router, prefix="/fault-reports", tags=["fault-reports"])
+app.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
+app.include_router(reports.router, prefix="/reports", tags=["reports"])
 
 app.add_middleware(
     CORSMiddleware,

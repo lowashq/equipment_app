@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     smtp_user: str
     smtp_password: str
 
+    twilio_account_sid: str = ""
+    twilio_auth_token: str = ""
+    twilio_phone_number: str = ""
+
     model_config = SettingsConfigDict(
         env_file=(".env", "../.env"),
         env_file_encoding="utf-8",

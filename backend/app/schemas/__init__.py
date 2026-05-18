@@ -13,6 +13,7 @@ from app.schemas.equipment import (
     EquipmentUpdate,
 )
 from app.schemas.fault_report import FaultReportCreate, FaultReportResponse
+from app.schemas.notification import NotificationResponse
 from app.schemas.reservation import ReservationCreate, ReservationResponse
 from app.schemas.return_schema import ReturnCreate, ReturnDetailResponse, ReturnResponse
 from app.schemas.user import UserCreate, UserResponse
@@ -25,6 +26,7 @@ __all__ = [
     "EquipmentUpdate",
     "FaultReportCreate",
     "FaultReportResponse",
+    "NotificationResponse",
     "ReservationCreate",
     "ReservationResponse",
     "ReturnCreate",
