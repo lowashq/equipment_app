@@ -1,6 +1,7 @@
 from urllib.parse import urlencode
 
 import httpx
+from fastapi import HTTPException, status
 from jose import jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +11,7 @@ from app.models import User
 
 
 LOCAL_ROLES = ("admin", "equipment_manager", "staff", "student")
+ELEVATED_ROLES = ("admin", "equipment_manager")
 
 
 def _realm_url(base_url: str) -> str:
@@ -19,11 +21,32 @@ def _realm_url(base_url: str) -> str:
 def get_keycloak_login_url() -> str:
     params = {
         "client_id": settings.keycloak_client_id,
-        "redirect_uri": settings.keycloak_redirect_uri,
+        "redirect_uri": settings.keycloak_frontend_redirect_uri,
         "response_type": "code",
         "scope": "openid email profile",
     }
     return f"{_realm_url(settings.keycloak_public_url)}/protocol/openid-connect/auth?{urlencode(params)}"
+
+
+def get_keycloak_registration_url() -> str:
+    params = {
+        "client_id": settings.keycloak_client_id,
+        "redirect_uri": settings.keycloak_frontend_redirect_uri,
+        "response_type": "code",
+        "scope": "openid email profile",
+    }
+    return (
+        f"{_realm_url(settings.keycloak_public_url)}"
+        f"/protocol/openid-connect/registrations?{urlencode(params)}"
+    )
+
+
+def get_keycloak_logout_url() -> str:
+    params = {
+        "client_id": settings.keycloak_client_id,
+        "post_logout_redirect_uri": "http://localhost:3000/login",
+    }
+    return f"{_realm_url(settings.keycloak_public_url)}/protocol/openid-connect/logout?{urlencode(params)}"
 
 
 async def exchange_code_for_token(code: str) -> dict:
@@ -32,7 +55,7 @@ async def exchange_code_for_token(code: str) -> dict:
         "grant_type": "authorization_code",
         "client_id": settings.keycloak_client_id,
         "code": code,
-        "redirect_uri": settings.keycloak_redirect_uri,
+        "redirect_uri": settings.keycloak_frontend_redirect_uri,
     }
 
     if settings.keycloak_client_secret:
@@ -60,20 +83,34 @@ def get_claims_from_access_token(token: str) -> dict:
     return jwt.get_unverified_claims(token)
 
 
-def _role_from_user_info(user_info: dict) -> str:
-    token_roles = user_info.get("realm_access", {}).get("roles", [])
-
-    for role in LOCAL_ROLES:
-        if role in token_roles:
-            return role
-
-    email = user_info.get("email", "").lower()
+def _role_from_email(email: str) -> str:
+    email = email.lower()
     if email.endswith("@student.san.edu.pl"):
         return "student"
     if email.endswith("@san.edu.pl"):
         return "staff"
 
-    return "student"
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Account not allowed. Use your university email.",
+    )
+
+
+def _role_from_user_info(user_info: dict, current_role: str | None = None) -> str:
+    baseline_role = _role_from_email(user_info.get("email", ""))
+    token_roles = set(user_info.get("realm_access", {}).get("roles", []))
+
+    for role in ELEVATED_ROLES:
+        if role in token_roles:
+            return role
+
+    if current_role in ELEVATED_ROLES:
+        return current_role
+
+    if "staff" in token_roles and baseline_role == "staff":
+        return "staff"
+
+    return baseline_role
 
 
 async def sync_keycloak_user(user_info: dict, db: AsyncSession) -> User:
@@ -88,7 +125,6 @@ async def sync_keycloak_user(user_info: dict, db: AsyncSession) -> User:
         )
         or email
     )
-    role = _role_from_user_info(user_info)
 
     result = await db.execute(select(User).where(User.keycloak_id == keycloak_id))
     user = result.scalar_one_or_none()
@@ -96,6 +132,8 @@ async def sync_keycloak_user(user_info: dict, db: AsyncSession) -> User:
     if user is None:
         result = await db.execute(select(User).where(User.email == email))
         user = result.scalar_one_or_none()
+
+    role = _role_from_user_info(user_info, user.role if user else None)
 
     if user is None:
         user = User(

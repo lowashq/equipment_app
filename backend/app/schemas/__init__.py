@@ -16,7 +16,7 @@ from app.schemas.fault_report import FaultReportCreate, FaultReportResponse
 from app.schemas.notification import NotificationResponse
 from app.schemas.reservation import ReservationCreate, ReservationResponse
 from app.schemas.return_schema import ReturnCreate, ReturnDetailResponse, ReturnResponse
-from app.schemas.user import UserCreate, UserResponse
+from app.schemas.user import UserCreate, UserResponse, UserRoleUpdate
 
 __all__ = [
     "EquipmentCreate",
@@ -39,4 +39,5 @@ __all__ = [
     "TokenResponse",
     "UserCreate",
     "UserResponse",
+    "UserRoleUpdate",
 ]

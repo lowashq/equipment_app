@@ -9,6 +9,8 @@ from app.auth.keycloak import (
     exchange_code_for_token,
     get_claims_from_access_token,
     get_keycloak_login_url,
+    get_keycloak_logout_url,
+    get_keycloak_registration_url,
     get_keycloak_user_info,
     sync_keycloak_user,
 )
@@ -113,6 +115,16 @@ async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)) -> To
 @router.get("/keycloak/login", response_model=KeycloakLoginResponse)
 async def keycloak_login() -> KeycloakLoginResponse:
     return KeycloakLoginResponse(url=get_keycloak_login_url())
+
+
+@router.get("/keycloak/register", response_model=KeycloakLoginResponse)
+async def keycloak_register() -> KeycloakLoginResponse:
+    return KeycloakLoginResponse(url=get_keycloak_registration_url())
+
+
+@router.get("/keycloak/logout", response_model=KeycloakLoginResponse)
+async def keycloak_logout() -> KeycloakLoginResponse:
+    return KeycloakLoginResponse(url=get_keycloak_logout_url())
 
 
 @router.get("/keycloak/callback", response_model=TokenResponse)

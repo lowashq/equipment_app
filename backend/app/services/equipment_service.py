@@ -3,12 +3,12 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import or_, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models import Equipment, Reservation
+from app.models import Equipment, FaultReport, Notification, Reservation, Return
 from app.schemas.equipment import EquipmentCreate, EquipmentUpdate
 
 
@@ -133,8 +133,21 @@ async def update_equipment_status(
 async def delete_equipment(equipment_id: UUID, db: AsyncSession) -> None:
     equipment = await get_equipment_by_id(equipment_id, db)
 
-    await db.delete(equipment)
     try:
+        reservation_ids_result = await db.execute(
+            select(Reservation.id).where(Reservation.equipment_id == equipment_id)
+        )
+        reservation_ids = list(reservation_ids_result.scalars().all())
+
+        if reservation_ids:
+            await db.execute(
+                delete(Notification).where(Notification.reservation_id.in_(reservation_ids))
+            )
+            await db.execute(delete(Return).where(Return.reservation_id.in_(reservation_ids)))
+            await db.execute(delete(Reservation).where(Reservation.id.in_(reservation_ids)))
+
+        await db.execute(delete(FaultReport).where(FaultReport.equipment_id == equipment_id))
+        await db.delete(equipment)
         await db.commit()
     except IntegrityError as exc:
         await db.rollback()

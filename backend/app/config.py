@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     keycloak_client_id: str
     keycloak_client_secret: str = ""
     keycloak_redirect_uri: str = "http://localhost:8000/auth/keycloak/callback"
+    keycloak_frontend_redirect_uri: str = "http://localhost:3000/auth/callback"
 
     decision_engine_url: str
 

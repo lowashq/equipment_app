@@ -77,7 +77,7 @@ async def update_equipment_endpoint(
 async def delete_equipment_endpoint(
     equipment_id: UUID,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(require_role("admin")),
+    _: User = Depends(require_role("equipment_manager", "admin")),
 ) -> dict[str, str]:
     await delete_equipment(equipment_id, db)
     return {"message": "Equipment deleted successfully"}

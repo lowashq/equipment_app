@@ -5,12 +5,13 @@ from fastapi import APIRouter, Depends, Query, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.jwt import get_current_user
+from app.auth.jwt import get_current_user, require_role
 from app.database import get_db
 from app.models import User
 from app.schemas.reservation import ReservationCreate, ReservationResponse, ReservationStatus
 from app.services.reservation_service import (
     ReservationRejectedError,
+    approve_reservation,
     cancel_reservation,
     create_reservation,
     get_user_reservations,
@@ -55,3 +56,12 @@ async def cancel_reservation_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
     return await cancel_reservation(reservation_id, current_user, db)
+
+
+@router.patch("/{reservation_id}/approve", response_model=ReservationResponse)
+async def approve_reservation_endpoint(
+    reservation_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_role("staff", "equipment_manager", "admin")),
+) -> ReservationResponse:
+    return await approve_reservation(reservation_id, db)

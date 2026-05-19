@@ -72,14 +72,17 @@ async def create_reservation(
             score=decision["score"],
         )
 
+    reservation_status = "active" if decision["score"] == 100 else "pending"
+    equipment_status = "borrowed" if reservation_status == "active" else "reserved"
+
     reservation = Reservation(
         user_id=user.id,
         equipment_id=equipment.id,
         start_date=data.start_date,
         end_date=data.end_date,
-        status="pending",
+        status=reservation_status,
     )
-    equipment.status = "reserved"
+    equipment.status = equipment_status
 
     db.add(reservation)
     await db.commit()
@@ -101,7 +104,7 @@ async def get_user_reservations(
         .order_by(Reservation.created_at.desc())
     )
 
-    if user.role not in {"admin", "equipment_manager"}:
+    if user.role not in {"admin", "equipment_manager", "staff"}:
         stmt = stmt.where(Reservation.user_id == user.id)
 
     if reservation_status is not None:
@@ -135,3 +138,28 @@ async def cancel_reservation(
     await db.commit()
 
     return {"message": "Reservation cancelled"}
+
+
+async def approve_reservation(
+    reservation_id: UUID,
+    db: AsyncSession,
+) -> Reservation:
+    reservation = await _get_reservation_with_details(reservation_id, db)
+
+    if reservation.status != "pending":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only pending reservations can be approved",
+        )
+
+    if reservation.equipment.status != "reserved":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Equipment must be reserved before approving the reservation",
+        )
+
+    reservation.status = "active"
+    reservation.equipment.status = "borrowed"
+    await db.commit()
+
+    return await _get_reservation_with_details(reservation.id, db)

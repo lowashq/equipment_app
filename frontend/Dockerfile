@@ -1,13 +1,15 @@
-FROM nginx:1.27-alpine
+FROM node:20-alpine
 
-RUN printf '%s\n' \
-    '<!doctype html>' \
-    '<html lang="en">' \
-    '<head><meta charset="utf-8"><title>University Equipment Rental</title></head>' \
-    '<body><h1>University Equipment Rental</h1><p>React app placeholder.</p></body>' \
-    '</html>' \
-    > /usr/share/nginx/html/index.html
+WORKDIR /app
 
-EXPOSE 80
+COPY package*.json ./
+RUN npm install
 
-CMD ["nginx", "-g", "daemon off;"]
+COPY . .
+
+ENV HOST=0.0.0.0
+ENV PORT=3000
+
+EXPOSE 3000
+
+CMD ["npm", "start"]

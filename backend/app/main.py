@@ -19,6 +19,7 @@ from app.routers import (
     reports,
     reservations,
     returns,
+    users,
 )
 from app.scheduler import check_upcoming_returns
 
@@ -73,6 +74,7 @@ app.include_router(returns.router, prefix="/returns", tags=["returns"])
 app.include_router(fault_reports.router, prefix="/fault-reports", tags=["fault-reports"])
 app.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
 app.include_router(reports.router, prefix="/reports", tags=["reports"])
+app.include_router(users.router, prefix="/users", tags=["users"])
 
 app.add_middleware(
     CORSMiddleware,
