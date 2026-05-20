@@ -28,7 +28,7 @@ REPORT_COLUMNS = [
     "return_notes",
 ]
 
-EQUIPMENT_STATUSES = ["available", "reserved", "borrowed", "serviced", "damaged"]
+EQUIPMENT_STATUSES = ["available", "reserved", "borrowed", "damaged"]
 
 
 async def _count(db: AsyncSession, stmt) -> int:
@@ -56,9 +56,9 @@ async def get_rental_statistics(db: AsyncSession) -> dict[str, Any]:
         select(Equipment.status, func.count(Equipment.id)).group_by(Equipment.status)
     )
     equipment_by_status = {status: 0 for status in EQUIPMENT_STATUSES}
-    equipment_by_status.update(
-        {status: int(count) for status, count in status_result.all()}
-    )
+    for status, count in status_result.all():
+        if status in equipment_by_status:
+            equipment_by_status[status] = int(count)
 
     rented_result = await db.execute(
         select(

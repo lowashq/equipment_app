@@ -79,7 +79,7 @@ EQUIPMENT = [
         "serial_number": "UER-LAP-005",
         "technical_spec": "Apple M3 Pro, 18GB RAM, 512GB SSD",
         "location": "Lab A",
-        "status": "serviced",
+        "status": "available",
     },
     {
         "name": "MacBook Air M2",

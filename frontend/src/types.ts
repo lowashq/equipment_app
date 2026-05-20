@@ -13,7 +13,6 @@ export type EquipmentStatus =
   | "available"
   | "reserved"
   | "borrowed"
-  | "serviced"
   | "damaged";
 
 export interface Equipment {

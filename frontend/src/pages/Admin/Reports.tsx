@@ -22,7 +22,10 @@ export default function Reports() {
   }
 
   const stats = statisticsQuery.data;
-  const maxStatus = Math.max(...Object.values(stats.equipment_by_status), 1);
+  const totalEquipmentByStatus = Object.values(stats.equipment_by_status).reduce(
+    (sum, count) => sum + count,
+    0
+  );
 
   return (
     <div className="space-y-6">
@@ -63,7 +66,11 @@ export default function Reports() {
                 <div className="mt-1 h-2 rounded bg-slate-100">
                   <div
                     className="h-2 rounded bg-sky-700"
-                    style={{ width: `${(count / maxStatus) * 100}%` }}
+                    style={{
+                      width: totalEquipmentByStatus
+                        ? `${(count / totalEquipmentByStatus) * 100}%`
+                        : "0%"
+                    }}
                   />
                 </div>
               </div>

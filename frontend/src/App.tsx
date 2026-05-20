@@ -6,6 +6,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RoleGuard from "./components/RoleGuard";
 import { AuthProvider } from "./context/AuthContext";
 import EquipmentManager from "./pages/Admin/EquipmentManager";
+import FaultReports from "./pages/Admin/FaultReports";
 import Reports from "./pages/Admin/Reports";
 import UserManager from "./pages/Admin/UserManager";
 import AuthCallback from "./pages/AuthCallback";
@@ -48,6 +49,7 @@ export default function App() {
 
                 <Route element={<RoleGuard roles={["equipment_manager", "admin"]} />}>
                   <Route path="/admin/equipment" element={<EquipmentManager />} />
+                  <Route path="/admin/fault-reports" element={<FaultReports />} />
                   <Route path="/admin/reports" element={<Reports />} />
                 </Route>
                 <Route element={<RoleGuard roles={["admin"]} />}>

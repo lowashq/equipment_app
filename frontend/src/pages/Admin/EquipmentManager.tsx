@@ -19,7 +19,6 @@ const statuses: EquipmentStatus[] = [
   "available",
   "reserved",
   "borrowed",
-  "serviced",
   "damaged"
 ];
 
@@ -86,7 +85,11 @@ export default function EquipmentManager() {
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: EquipmentStatus }) =>
       updateEquipmentStatus(id, status),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["equipment"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["equipment"] });
+      queryClient.invalidateQueries({ queryKey: ["fault-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["reports", "statistics"] });
+    },
     onError: (err: any) => setError(err.response?.data?.detail ?? "Could not change status.")
   });
 

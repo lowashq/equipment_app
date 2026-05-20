@@ -63,14 +63,18 @@
 
 
 (defn evaluate [ctx]
-  (let [failed      (filter #(not ((:check %) ctx)) rules)
-        hard-blocks (filter :hard-block failed)
-        penalty     (reduce + (map :weight failed))
-        score       (max 0 (- 100 penalty))
-        approved    (and (empty? hard-blocks) (>= score 60))]
-    {:approved approved
-     :score score
-     :reasons (vec (map :name failed))}))
+  (if (contains? #{"staff" "equipment_manager" "admin"} (:user-role ctx))
+    {:approved true
+     :score 100
+     :reasons []}
+    (let [failed      (filter #(not ((:check %) ctx)) rules)
+          hard-blocks (filter :hard-block failed)
+          penalty     (reduce + (map :weight failed))
+          score       (max 0 (- 100 penalty))
+          approved    (and (empty? hard-blocks) (>= score 60))]
+      {:approved approved
+       :score score
+       :reasons (vec (map :name failed))})))
 
 
 (defn public-rules []

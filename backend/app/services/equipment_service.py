@@ -13,11 +13,10 @@ from app.schemas.equipment import EquipmentCreate, EquipmentUpdate
 
 
 VALID_STATUS_TRANSITIONS: dict[str, set[str]] = {
-    "available": {"reserved", "serviced"},
-    "reserved": {"borrowed", "available", "serviced"},
-    "borrowed": {"available", "damaged", "serviced"},
-    "serviced": {"available"},
-    "damaged": {"serviced"},
+    "available": {"reserved", "damaged"},
+    "reserved": {"borrowed", "available", "damaged"},
+    "borrowed": {"available", "damaged"},
+    "damaged": {"available"},
 }
 
 
@@ -31,6 +30,22 @@ def validate_status_transition(current_status: str, new_status: str) -> None:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid status transition from {current_status} to {new_status}",
         )
+
+
+async def resolve_fault_reports_for_available_equipment(
+    equipment_id: UUID,
+    db: AsyncSession,
+) -> None:
+    result = await db.execute(
+        select(FaultReport).where(
+            FaultReport.equipment_id == equipment_id,
+            FaultReport.resolved_at.is_(None),
+        )
+    )
+    resolved_at = datetime.now(timezone.utc)
+
+    for report in result.scalars().all():
+        report.resolved_at = resolved_at
 
 
 async def get_all_equipment(filters: dict[str, str | None], db: AsyncSession) -> list[Equipment]:
@@ -100,6 +115,9 @@ async def update_equipment(equipment_id: UUID, data: EquipmentUpdate, db: AsyncS
     for field, value in update_data.items():
         setattr(equipment, field, value)
 
+    if update_data.get("status") == "available":
+        await resolve_fault_reports_for_available_equipment(equipment.id, db)
+
     equipment.updated_at = datetime.now(timezone.utc)
 
     try:
@@ -124,6 +142,9 @@ async def update_equipment_status(
     validate_status_transition(equipment.status, new_status)
 
     equipment.status = new_status
+    if new_status == "available":
+        await resolve_fault_reports_for_available_equipment(equipment.id, db)
+
     equipment.updated_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(equipment)

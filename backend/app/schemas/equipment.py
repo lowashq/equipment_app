@@ -5,7 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 
-EquipmentStatus = Literal["available", "reserved", "borrowed", "serviced", "damaged"]
+EquipmentStatus = Literal["available", "reserved", "borrowed", "damaged"]
 
 
 class EquipmentCreate(BaseModel):

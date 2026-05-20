@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated
 from uuid import UUID
 
@@ -9,6 +10,10 @@ from app.auth.jwt import get_current_user, require_role
 from app.database import get_db
 from app.models import User
 from app.schemas.reservation import ReservationCreate, ReservationResponse, ReservationStatus
+from app.services.notification_service import (
+    send_cancellation_email,
+    send_reservation_confirmation,
+)
 from app.services.reservation_service import (
     ReservationRejectedError,
     approve_reservation,
@@ -19,6 +24,15 @@ from app.services.reservation_service import (
 
 
 router = APIRouter()
+logger = logging.getLogger("uvicorn.error")
+
+
+async def _send_notification_safely(notification_call, db: AsyncSession) -> None:
+    try:
+        await notification_call()
+        await db.commit()
+    except Exception:
+        logger.exception("Reservation email notification failed")
 
 
 @router.get("", response_model=list[ReservationResponse])
@@ -37,7 +51,7 @@ async def create_reservation_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> ReservationResponse | JSONResponse:
     try:
-        return await create_reservation(current_user, payload, db)
+        reservation = await create_reservation(current_user, payload, db)
     except ReservationRejectedError as exc:
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -47,6 +61,11 @@ async def create_reservation_endpoint(
                 "score": exc.score,
             },
         )
+    await _send_notification_safely(
+        lambda: send_reservation_confirmation(reservation, db),
+        db,
+    )
+    return reservation
 
 
 @router.delete("/{reservation_id}")
@@ -55,7 +74,12 @@ async def cancel_reservation_endpoint(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
-    return await cancel_reservation(reservation_id, current_user, db)
+    reservation = await cancel_reservation(reservation_id, current_user, db)
+    await _send_notification_safely(
+        lambda: send_cancellation_email(reservation, db),
+        db,
+    )
+    return {"message": "Reservation cancelled"}
 
 
 @router.patch("/{reservation_id}/approve", response_model=ReservationResponse)

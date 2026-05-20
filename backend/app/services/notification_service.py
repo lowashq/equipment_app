@@ -6,6 +6,7 @@ from uuid import UUID
 import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.config import settings
 from app.models import Notification, Reservation
@@ -36,11 +37,20 @@ def _twilio_is_configured() -> bool:
 async def send_email(to: str, subject: str, body: str) -> None:
     if not _smtp_is_configured():
         print(
-            f"Mock email notification to={to} subject={subject} body={body}",
+            "\n".join(
+                [
+                    "--- Mock email notification ---",
+                    f"To: {to}",
+                    f"Subject: {subject}",
+                    "",
+                    body,
+                    "--- End mock email notification ---",
+                ]
+            ),
             flush=True,
         )
         logger.warning(
-            "Mock email notification to=%s subject=%s body=%s",
+            "Mock email notification to=%s subject=%s\n%s",
             to,
             subject,
             body,
@@ -107,15 +117,80 @@ async def log_notification(
     return notification
 
 
-async def send_return_reminder(reservation: Reservation, db: AsyncSession) -> None:
-    message = (
-        f"Your rental of {reservation.equipment.name} is due on {reservation.end_date}. "
-        "Please return it on time to avoid penalties."
+async def _get_reservation_details(
+    reservation: Reservation,
+    db: AsyncSession,
+) -> Reservation:
+    result = await db.execute(
+        select(Reservation)
+        .where(Reservation.id == reservation.id)
+        .options(
+            selectinload(Reservation.user),
+            selectinload(Reservation.equipment),
+        )
+    )
+    detailed_reservation = result.scalar_one_or_none()
+    if detailed_reservation is None:
+        raise ValueError("Reservation not found")
+    return detailed_reservation
+
+
+def _equipment_location(reservation: Reservation) -> str:
+    return reservation.equipment.location or "Not specified"
+
+
+async def send_reservation_confirmation(
+    reservation: Reservation,
+    db: AsyncSession,
+) -> None:
+    reservation = await _get_reservation_details(reservation, db)
+    equipment = reservation.equipment
+    user = reservation.user
+
+    subject = f"Reservation Confirmed - {equipment.name}"
+    body = f"""Hello {user.full_name},
+
+Your reservation has been confirmed.
+
+Equipment: {equipment.name} ({equipment.type})
+Serial number: {equipment.serial_number}
+Location: {_equipment_location(reservation)}
+Reservation period: {reservation.start_date} - {reservation.end_date}
+
+Please pick up the equipment at the specified location on your start date.
+
+University Equipment Rental System
+"""
+
+    await send_email(to=user.email, subject=subject, body=body)
+    await log_notification(
+        user_id=reservation.user_id,
+        reservation_id=reservation.id,
+        type="email",
+        message=body,
+        db=db,
     )
 
+
+async def send_return_reminder(reservation: Reservation, db: AsyncSession) -> None:
+    reservation = await _get_reservation_details(reservation, db)
+    equipment = reservation.equipment
+    user = reservation.user
+    message = f"""Hello {user.full_name},
+
+This is a reminder that your rental is due soon.
+
+Equipment: {equipment.name} ({equipment.type})
+Return deadline: {reservation.end_date}
+
+Please return the equipment on time to avoid penalties.
+
+University Equipment Rental System
+"""
+
     await send_email(
-        to=reservation.user.email,
-        subject="Equipment return reminder",
+        to=user.email,
+        subject=f"Reminder: Return Due in 2 Days - {equipment.name}",
         body=message,
     )
     await log_notification(
@@ -136,6 +211,69 @@ async def send_return_reminder(reservation: Reservation, db: AsyncSession) -> No
             message=message,
             db=db,
         )
+
+
+async def send_cancellation_email(
+    reservation: Reservation,
+    db: AsyncSession,
+) -> None:
+    reservation = await _get_reservation_details(reservation, db)
+    equipment = reservation.equipment
+    user = reservation.user
+
+    subject = f"Reservation Cancelled - {equipment.name}"
+    body = f"""Hello {user.full_name},
+
+Your reservation has been cancelled.
+
+Equipment: {equipment.name} ({equipment.type})
+Original period: {reservation.start_date} - {reservation.end_date}
+
+If this was a mistake, you can make a new reservation at any time.
+
+University Equipment Rental System
+"""
+
+    await send_email(to=user.email, subject=subject, body=body)
+    await log_notification(
+        user_id=reservation.user_id,
+        reservation_id=reservation.id,
+        type="email",
+        message=body,
+        db=db,
+    )
+
+
+async def send_overdue_notice(
+    reservation: Reservation,
+    db: AsyncSession,
+) -> None:
+    reservation = await _get_reservation_details(reservation, db)
+    equipment = reservation.equipment
+    user = reservation.user
+
+    subject = f"Overdue Rental - {equipment.name}"
+    body = f"""Hello {user.full_name},
+
+Your rental is overdue.
+
+Equipment: {equipment.name} ({equipment.type})
+Serial number: {equipment.serial_number}
+Original return deadline: {reservation.end_date}
+
+Please return the equipment as soon as possible or contact staff if you need help.
+
+University Equipment Rental System
+"""
+
+    await send_email(to=user.email, subject=subject, body=body)
+    await log_notification(
+        user_id=reservation.user_id,
+        reservation_id=reservation.id,
+        type="email",
+        message=body,
+        db=db,
+    )
 
 
 async def get_user_notifications(user_id: UUID, db: AsyncSession) -> list[Notification]:

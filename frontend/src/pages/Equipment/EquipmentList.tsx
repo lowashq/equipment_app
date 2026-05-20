@@ -13,7 +13,6 @@ const statuses: Array<EquipmentStatus | ""> = [
   "available",
   "reserved",
   "borrowed",
-  "serviced",
   "damaged"
 ];
 const locations = [

@@ -74,8 +74,10 @@ export default function EquipmentDetail() {
     mutationFn: (values: FaultForm) =>
       createFaultReport({ equipment_id: id!, description: values.description }),
     onSuccess: () => {
-      setFaultSuccess("Fault report submitted.");
+      setFaultSuccess("Fault report submitted. Equipment marked as damaged.");
       faultForm.reset();
+      queryClient.invalidateQueries({ queryKey: ["equipment", id] });
+      queryClient.invalidateQueries({ queryKey: ["equipment"] });
     }
   });
 

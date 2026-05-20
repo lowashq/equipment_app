@@ -76,6 +76,16 @@ export default function Layout() {
               >
                 Reports
               </NavLink>
+              <NavLink
+                to="/admin/fault-reports"
+                className={({ isActive }) =>
+                  `${navLinkBase} ${
+                    isActive ? "bg-sky-50 text-sky-800" : "text-slate-700"
+                  }`
+                }
+              >
+                Fault Reports
+              </NavLink>
               {isRole("admin") && (
                 <NavLink
                   to="/admin/users"

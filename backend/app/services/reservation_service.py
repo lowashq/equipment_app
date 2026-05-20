@@ -1,4 +1,3 @@
-from typing import Any
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -118,7 +117,7 @@ async def cancel_reservation(
     reservation_id: UUID,
     user: User,
     db: AsyncSession,
-) -> dict[str, Any]:
+) -> Reservation:
     reservation = await _get_reservation_with_details(reservation_id, db)
 
     if reservation.user_id != user.id and user.role not in {"admin", "equipment_manager"}:
@@ -137,7 +136,7 @@ async def cancel_reservation(
     reservation.equipment.status = "available"
     await db.commit()
 
-    return {"message": "Reservation cancelled"}
+    return await _get_reservation_with_details(reservation.id, db)
 
 
 async def approve_reservation(

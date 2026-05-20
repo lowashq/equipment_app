@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 
 from app.database import AsyncSessionLocal
 from app.models import Reservation
-from app.services.notification_service import send_return_reminder
+from app.services.notification_service import send_overdue_notice, send_return_reminder
 
 
 logger = logging.getLogger("uvicorn.error")
@@ -19,7 +19,7 @@ async def check_upcoming_returns(db: AsyncSession | None = None) -> None:
 
     try:
         target_date = date.today() + timedelta(days=2)
-        result = await session.execute(
+        upcoming_result = await session.execute(
             select(Reservation)
             .where(
                 Reservation.status.in_(("active", "pending")),
@@ -30,26 +30,44 @@ async def check_upcoming_returns(db: AsyncSession | None = None) -> None:
                 selectinload(Reservation.equipment),
             )
         )
-        reservations = list(result.scalars().all())
+        upcoming_reservations = list(upcoming_result.scalars().all())
 
-        for reservation in reservations:
+        overdue_result = await session.execute(
+            select(Reservation)
+            .where(
+                Reservation.status.in_(("active", "pending")),
+                Reservation.end_date < date.today(),
+            )
+            .options(
+                selectinload(Reservation.user),
+                selectinload(Reservation.equipment),
+            )
+        )
+        overdue_reservations = list(overdue_result.scalars().all())
+
+        for reservation in upcoming_reservations:
             await send_return_reminder(reservation, session)
 
-        if reservations:
+        for reservation in overdue_reservations:
+            await send_overdue_notice(reservation, session)
+
+        if upcoming_reservations or overdue_reservations:
             await session.commit()
 
         print(
-            f"Upcoming return reminder check completed; reminders={len(reservations)}",
+            "Return notification check completed; "
+            f"reminders={len(upcoming_reservations)} overdue={len(overdue_reservations)}",
             flush=True,
         )
         logger.warning(
-            "Upcoming return reminder check completed; reminders=%s",
-            len(reservations),
+            "Return notification check completed; reminders=%s overdue=%s",
+            len(upcoming_reservations),
+            len(overdue_reservations),
         )
     except Exception:
         if owns_session:
             await session.rollback()
-        logger.exception("Upcoming return reminder check failed")
+        logger.exception("Return notification check failed")
         raise
     finally:
         if owns_session:

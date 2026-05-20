@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models import Equipment, FaultReport, User
 from app.schemas.fault_report import FaultReportCreate
@@ -26,6 +27,7 @@ async def create_fault_report(
         user_id=current_user.id,
         description=data.description,
     )
+    equipment.status = "damaged"
     db.add(report)
     await db.commit()
     await db.refresh(report)
@@ -50,14 +52,30 @@ async def get_fault_reports(
 
 
 async def resolve_fault_report(report_id: UUID, db: AsyncSession) -> FaultReport:
-    report = await db.scalar(select(FaultReport).where(FaultReport.id == report_id))
+    result = await db.execute(
+        select(FaultReport)
+        .where(FaultReport.id == report_id)
+        .options(selectinload(FaultReport.equipment))
+    )
+    report = result.scalar_one_or_none()
     if report is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Fault report not found",
         )
 
-    report.resolved_at = datetime.now(timezone.utc)
+    resolved_at = datetime.now(timezone.utc)
+    open_reports_result = await db.execute(
+        select(FaultReport).where(
+            FaultReport.equipment_id == report.equipment_id,
+            FaultReport.resolved_at.is_(None),
+        )
+    )
+    for open_report in open_reports_result.scalars().all():
+        open_report.resolved_at = resolved_at
+
+    report.equipment.status = "available"
+    report.equipment.updated_at = resolved_at
     await db.commit()
     await db.refresh(report)
     return report
